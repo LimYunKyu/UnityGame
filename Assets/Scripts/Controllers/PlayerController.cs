@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     protected Define.State _state = Define.State.Idle;
 
+    Vector3 _angle = Vector3.zero;
 
     public virtual Define.State State
     {
@@ -209,7 +210,7 @@ public class PlayerController : MonoBehaviour
 
 
         }
-       
+
     }
 
     void OnCollisionEnter(Collision collision)

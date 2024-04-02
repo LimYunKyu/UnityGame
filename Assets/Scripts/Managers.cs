@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using static Define;
 
@@ -41,6 +42,8 @@ public class Managers : MonoBehaviour
            //s_instance._pool.Init();
            //s_instance._sound.Init();
         }
+
+        //Camera.main.gameObject.GetOrAddComponent<CameraController>().SetPlayer(player);
     }
 
     public static void Clear()
