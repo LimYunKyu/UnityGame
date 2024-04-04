@@ -6,38 +6,37 @@ public class CameraController : MonoBehaviour
 {
     [SerializeField]
     Define.CameraMode _mode = Define.CameraMode.QuarterView;
-
     [SerializeField]
-    Vector3 _delta = new Vector3(0.0f, 6.0f, -5.0f);
-
-
-    Vector3 _cameraDir = Vector3.zero;
-
+    private GameObject _cameraHolder = null;
     [SerializeField]
-    GameObject _player = null;
+    private float _distance = 3.0f;
 
-    [SerializeField]
-    GameObject _cameraHolder = null;
 
-    GameObject _offertObj;
-
+    float offsetY;
     
-    public void SetPlayer(GameObject player) { _player = player; }
 
     void Start()
     {
-        _offertObj = new GameObject();
+        
+        _cameraHolder.GetComponent<CameraHolderController>().AfterMoveAction -= OnUpdateCameraPos;
+        _cameraHolder.GetComponent<CameraHolderController>().AfterMoveAction += OnUpdateCameraPos;
+        _distance = 3.0f;
+
     }
 
-    void LateUpdate()
+    public void SetQuarterView(Vector3 delta)
+    {
+        _mode = Define.CameraMode.QuarterView;
+       
+      
+    }
+
+    public void OnUpdateCameraPos()
     {
 
-
-        Vector3 dir = _cameraHolder.transform.forward * 3;
         
-        transform.position = -dir * 3;
-        transform.LookAt(_cameraHolder.transform);
-
+        Vector3 dir = _cameraHolder.transform.forward.normalized * _distance;
+      
         if (_mode == Define.CameraMode.QuarterView)
         {
             if (_cameraHolder.activeSelf == false)
@@ -46,28 +45,43 @@ public class CameraController : MonoBehaviour
             }
 
             RaycastHit hit;
+            
 
             if (Physics.Raycast(_cameraHolder.transform.position, -dir.normalized, out hit, dir.magnitude, 1 << (int)Define.Layer.Block))
             {
 
+                float dist = (hit.point - _cameraHolder.transform.position).magnitude * 0.9f;
+                transform.position = _cameraHolder.transform.position + -dir.normalized * dist;  
+                transform.position = new Vector3(transform.position.x, offsetY, transform.position.z);
+                Vector3 target = _cameraHolder.transform.position - transform.position;
+                transform.rotation = Quaternion.LookRotation(target);
 
-                float dist = (hit.point  - _cameraHolder.transform.position).magnitude * 0.8f;
-                transform.position = _cameraHolder.transform.position + -dir.normalized * dist;
+               
+               
+
             }
             else
             {
 
-                _offertObj.transform.position = _cameraHolder.transform.position;
-
+                offsetY = transform.position.y;
                 transform.position = _cameraHolder.transform.position + -dir;
-                transform.LookAt(_offertObj.transform);
-            }
-        }
-    }
+                
+                if (Physics.Raycast(transform.position, Vector3.down, out hit, Vector3.down.magnitude, 1 << (int)Define.Layer.Block))
+                {
+                    if ((hit.point - transform.position).magnitude < 0.5)
+                    { 
+                        transform.position = new Vector3(transform.position.x,offsetY,transform.position.z);
+                        
+                    
+                    }
+                
+                }
 
-    public void SetQuarterView(Vector3 delta)
-    {
-        _mode = Define.CameraMode.QuarterView;
-        _delta = delta;
+                transform.LookAt(_cameraHolder.transform);
+            }
+
+
+           
+        }
     }
 }

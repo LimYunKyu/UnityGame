@@ -8,6 +8,7 @@ public class InputManager : MonoBehaviour
 {
    
     public Action KeyAction = null;
+    public Action NotKeyAction = null;
     public Action<Define.MouseEvent> MouseAction = null;
 
    
@@ -23,6 +24,9 @@ public class InputManager : MonoBehaviour
 
         if (Input.anyKey && KeyAction != null)
             KeyAction.Invoke();
+
+        if (!Input.anyKey && NotKeyAction != null)
+            NotKeyAction.Invoke();
 
         if (MouseAction != null)
         {

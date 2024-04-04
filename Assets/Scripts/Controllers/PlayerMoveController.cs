@@ -3,35 +3,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class PlayerMoveController : MonoBehaviour
 {
 
-    Vector3 _direction = Vector3.zero;
-    float _speed = 5.0f;
+    
+    [SerializeField]
+    private float _speed = 5.0f;
 
     [SerializeField]
-    float _jumpForce = 5f;
+    private float _jumpForce = 5f;
 
     private Rigidbody _rb;
     private bool isGrounded = true;
+    Vector3 _direction = Vector3.zero;
+
 
     [SerializeField]
     protected Define.State _state = Define.State.Idle;
 
-    Vector3 _angle = Vector3.zero;
+    private GameObject _cameraHolder;
+    Animator anim = null;
 
-
-    //DirectionRot
-
-    float _forwardRot = 0f;
-    float _backRot = 360f;
-    float _leftRot = 90f;
-    float _rightRot = 270f;
-    float _frRot = 45f;
-    float _rbRot = 135f;
-    float _lbRot = 225f;
-    float _flRot = 315f;
-   
+    public Action<float> _KeyBoardAction;
 
     public virtual Define.State State
     {
@@ -40,7 +33,7 @@ public class PlayerController : MonoBehaviour
         {
             _state = value;
 
-            Animator anim = GetComponent<Animator>();
+           
             switch (_state)
             {
                 case Define.State.Die:
@@ -60,11 +53,9 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
-
     void Start()
     {
         Init();
-
     }
 
 
@@ -100,7 +91,9 @@ public class PlayerController : MonoBehaviour
 
         if (!isGrounded)
             return;
-        _rb.AddForce(Vector3.up * _jumpForce, ForceMode.Impulse);
+
+        Vector3 dir = (Vector3.up + _direction);
+        _rb.AddForce(dir * _jumpForce, ForceMode.Impulse);
         isGrounded = false;
 
 
@@ -120,81 +113,85 @@ public class PlayerController : MonoBehaviour
     private void UpdateIdle()
     {
 
-        //Animator anim = GetComponent<Animator>();
-        //anim.CrossFade("WAIT", 0.1f);
-
-        //return;
     }
 
     private void UpdateMoving()
     {
 
         float applySpeed = _speed;
-        //ºÏµ¿
+        //ï¿½Ïµï¿½
         if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.D))
         {
 
             _direction = transform.forward + transform.right;
             _direction.Normalize();
-            
+            _KeyBoardAction.Invoke(45);
+
         }
 
 
-        //³²µ¿
+        //ï¿½ï¿½ï¿½ï¿½
         else if (Input.GetKey(KeyCode.D) && Input.GetKey(KeyCode.S))
         {
             _direction = transform.right - transform.forward;
             _direction.Normalize();
+            _KeyBoardAction.Invoke(135);
         }
-        //³²¼­
+        //ï¿½ï¿½ï¿½ï¿½
         else if (Input.GetKey(KeyCode.S) && Input.GetKey(KeyCode.A))
         {
             _direction = -transform.right - transform.forward;
             _direction.Normalize();
+            _KeyBoardAction.Invoke(225);
         }
-        //ºÏ¼­
+        //ï¿½Ï¼ï¿½
         else if (Input.GetKey(KeyCode.A) && Input.GetKey(KeyCode.W))
         {
             _direction = -transform.right + transform.forward;
             _direction.Normalize();
+            _KeyBoardAction.Invoke(315);
         }
 
-        //ºÏ
+        //ï¿½ï¿½
         else if (Input.GetKey(KeyCode.W))
         {
             _direction = transform.forward;
-
+            _KeyBoardAction.Invoke(0);
 
         }
-        //µ¿
+        //ï¿½ï¿½
         else if (Input.GetKey(KeyCode.D))
         {
             _direction = transform.right;
+            _KeyBoardAction.Invoke(90);
 
         }
-        //³²
+        //ï¿½ï¿½
         else if (Input.GetKey(KeyCode.S))
         {
             _direction = -transform.forward;
+            _KeyBoardAction.Invoke(180);
 
 
         }
-        //¼­
+        //ï¿½ï¿½
         else if (Input.GetKey(KeyCode.A))
         {
             _direction = -transform.right;
+            _KeyBoardAction.Invoke(270);
 
         }
         else
         {
             applySpeed = 0;
+            
         }
 
         //transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(_direction), 40 * Time.deltaTime);
 
         gameObject.transform.position += _direction * applySpeed * Time.deltaTime;
 
-        
+
     }
 
     private void UpdateDie()
@@ -205,35 +202,18 @@ public class PlayerController : MonoBehaviour
     public void Init()
     {
 
-        Managers.Input.MouseAction -= OnMouseEvent;
-        Managers.Input.MouseAction += OnMouseEvent;
+       
         Managers.Input.KeyAction -= OnKeyBoardEvent;
         Managers.Input.KeyAction += OnKeyBoardEvent;
         Managers.Input.NotKeyAction -= OffKeyBoardEvent;
         Managers.Input.NotKeyAction += OffKeyBoardEvent;
 
         _rb = GetComponent<Rigidbody>();
+        _cameraHolder = transform.Find("CameraHolder").gameObject;
+        anim = GetAnimatorFromChild();
+
 
     }
-    void OnMouseEvent(Define.MouseEvent evt)
-    {
-        //switch (State)
-        //{
-        //    case Define.State.Idle:
-        //        OnMouseEvent_IdleRun(evt);
-        //        break;
-        //    case Define.State.Moving:
-        //        OnMouseEvent_IdleRun(evt);
-        //        break;
-        //    case Define.State.Skill:
-        //        {
-        //            if (evt == Define.MouseEvent.PointerUp)
-        //                _stopSkill = true;
-        //        }
-        //        break;
-        //}
-    }
-
     void OnKeyBoardEvent()
     {
         UseKeyBoard();
@@ -249,7 +229,7 @@ public class PlayerController : MonoBehaviour
     }
     void OnCollisionEnter(Collision collision)
     {
-        // Ä³¸¯ÅÍ°¡ ¶¥¿¡ ´ê¾ÒÀ» ¶§ isGrounded¸¦ true·Î ¼³Á¤
+       
         if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
@@ -263,11 +243,15 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.S))
         {
 
-            if (State != Define.State.Moving)
+            if (State != Define.State.Moving && isGrounded)
                 State = Define.State.Moving;
 
+            Vector3 _dir = new Vector3(_cameraHolder.transform.forward.x, 0, _cameraHolder.transform.forward.z);
+            _dir.Normalize();
+            transform.rotation = Quaternion.LookRotation(_dir);
+
         }
-        else if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             if (isGrounded)
                 State = Define.State.Jump;
@@ -281,5 +265,23 @@ public class PlayerController : MonoBehaviour
         if (isGrounded)
             State = Define.State.Idle;
 
+        _direction = Vector3.zero;
+
+    }
+
+    Animator GetAnimatorFromChild()
+    {
+        Transform[] children = GetComponentsInChildren<Transform>(true);
+        Animator animator = null;
+        foreach (Transform child in children)
+        {
+            
+            if (child.GetComponent<Animator>())
+            {
+                animator = child.GetComponent<Animator>();
+            }
+        }
+
+        return animator;
     }
 }

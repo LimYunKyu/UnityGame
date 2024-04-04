@@ -1,57 +1,84 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class CameraHolderController : MonoBehaviour
 {
 
 
     Vector3 _angle = Vector3.zero;
+    Vector3 _preMousePos = Vector3.zero;
+    Vector3 _currentMousePos = Vector3.zero;
+    Vector3 _forwardVec = Vector3.zero;
 
-
-    void Start()
-    {
-        Init();   
-    }
+    public Action AfterMoveAction = null;
 
     
+    float _clampDown = -89f;
+    
+    float _clapmUP = 89f;
+    Transform _parent;
+    PlayerController _playerController;
+    void Start()
+    {
+        Init();
+    }
+
+
     void Update()
     {
-        
+
+
     }
 
     void Init()
     {
-        Managers.Input.KeyAction -= OnHolderMouseEvent;
-        Managers.Input.KeyAction += OnHolderMouseEvent;
+        if (transform.parent)
+        {
+            _parent = transform.parent;
+            transform.rotation = Quaternion.LookRotation(_parent.forward);
+        }
+        if (_parent.GetComponent<PlayerController>() != null)
+        {
 
+            _playerController = _parent.GetComponent<PlayerController>();
+        }
 
+        _currentMousePos = Input.mousePosition;
+        _preMousePos = Input.mousePosition;
 
     }
-    Quaternion accumulatedRotation = Quaternion.identity;
 
-    void OnHolderMouseEvent()
+    void LateUpdate()
     {
-        //X
-        if (Input.GetKey(KeyCode.Q))
-        {
-
-            _angle.x += Time.deltaTime * 50;
-            
-
-        }
-
-        //Y
-        if (Input.GetKey(KeyCode.E))
-        {
-
-            _angle.y += Time.deltaTime * 50;
-            
-
-        }
-
-
-        Quaternion rotation = Quaternion.Euler(_angle);
+        Quaternion rotation = Quaternion.Euler(CalcAngleUsedMousePos());
         transform.rotation = rotation;
+        _forwardVec = transform.forward;
+        
+        //ApplyHolderForward();
+        AfterMoveAction.Invoke();
     }
+    void ApplyHolderForward()
+    {
+
+        transform.rotation = Quaternion.LookRotation(_forwardVec);
+    }
+
+    Vector3 CalcAngleUsedMousePos()
+    {
+        _currentMousePos = Input.mousePosition;
+        Vector3 offset = _currentMousePos - _preMousePos;
+        _preMousePos = _currentMousePos;
+
+        _angle.x -= offset.y * 30 * Time.deltaTime;
+        _angle.y += offset.x * 50 * Time.deltaTime;
+
+        _angle.x = Mathf.Clamp(_angle.x, _clampDown, _clapmUP);
+
+        return _angle;
+    }
+
+
 }
